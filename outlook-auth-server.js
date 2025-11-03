@@ -21,10 +21,9 @@ const AUTH_CONFIG = {
     'offline_access',
     'User.Read',
     'Mail.Read',
-    'Mail.Send',
-    'Calendars.Read',
-    'Calendars.ReadWrite',
-    'Contacts.Read'
+    'profile',
+    'openid',
+    'email'
   ],
   tokenStorePath: path.join(process.env.HOME || process.env.USERPROFILE, '.outlook-mcp-tokens.json')
 };
@@ -187,7 +186,8 @@ const server = http.createServer((req, res) => {
       state: Date.now().toString() // Simple state parameter for security
     };
     
-    const authUrl = `https://login.microsoftonline.com/common/oauth2/v2.0/authorize?${querystring.stringify(authParams)}`;
+    const tenantId = process.env.MS_TENANT_ID || 'common';
+    const authUrl = `https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/authorize?${querystring.stringify(authParams)}`;
     console.log(`Redirecting to: ${authUrl}`);
     
     // Redirect to Microsoft's login page
@@ -236,9 +236,10 @@ function exchangeCodeForTokens(code) {
       scope: AUTH_CONFIG.scopes.join(' ')
     });
     
+    const tenantId = process.env.MS_TENANT_ID || 'common';
     const options = {
       hostname: 'login.microsoftonline.com',
-      path: '/common/oauth2/v2.0/token',
+      path: `/${tenantId}/oauth2/v2.0/token`,
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
